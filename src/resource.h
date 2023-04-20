@@ -1,0 +1,1 @@
+#define ID_ICONE_WIN_MOUSE  101

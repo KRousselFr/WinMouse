@@ -1,0 +1,35 @@
+#include "resource.h"
+#include "afxres.h"
+
+////////////////////////////////////////////////////////////////////////////////
+// Icon
+
+ID_ICONE_WIN_MOUSE      ICON    DISCARDABLE     "WinMouse.ico"
+
+////////////////////////////////////////////////////////////////////////////////
+// Version information
+
+VS_VERSION_INFO VERSIONINFO
+	FILEVERSION    0,5,0,0
+	PRODUCTVERSION 0,5,0,0
+{
+	BLOCK "StringFileInfo"
+	{
+		BLOCK "040C04E4"
+		{
+			VALUE "CompanyName",        "—\0"
+			VALUE "FileDescription",    "Mouvements souris Windows NT\0"
+			VALUE "FileVersion",        "0.5.0.0\0"
+			VALUE "LegalCopyright",     "(c) 2023 KR\0"
+			VALUE "OriginalFilename",   "WinMouse.exe\0"
+			VALUE "ProductName",        "Mouvements souris Windows NT\0"
+			VALUE "ProductVersion",     "0.5.0.0\0"
+		}
+	}
+	BLOCK "VarFileInfo"
+	{
+		// langID = 0x040C (français), charsetID = 1252 (Windows occidental)
+		VALUE "Translation", 0x040C, 1252
+	}
+}
+

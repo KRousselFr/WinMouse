@@ -1,0 +1,13 @@
+syntax: regexp
+
+# Executables et fichiers de compilation
+\.[oO]$
+\.[eE][xX][eE]$
+\.[dD][lL][lL]$
+^Debug$
+^Release$
+
+# dépôt Git
+\.git$
+
+

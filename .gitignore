@@ -1,0 +1,13 @@
+# scories système
+[dD]esktop.ini
+.DS_Store
+
+# Executables et fichiers de compilation
+*.[oO]
+*.[eE][xX][eE]
+*.[dD][lL][lL]
+Debug/
+Release/
+
+# dépôt Mercurial
+.hg/
