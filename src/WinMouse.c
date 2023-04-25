@@ -4,6 +4,9 @@
  * Programme de mouvement de la souris sous Windows NT.
  */
 
+#define _WIN32_WINNT  0x0500
+		/* programme conçu pour Windows 2000 ou ultérieur */
+
 #include <assert.h>
 #include <stdio.h>
 
@@ -21,7 +24,7 @@
  *
  * Version courante du programme WinMouse.
  */
-#define VERSION_PRG  L"0.5.0 du 20/04/2023"
+#define VERSION_PRG  L"0.7.0 du 25/04/2023"
 
 /* taille maximale d'un message affiché par ce programme */
 static const unsigned TAILLE_MAX_MSG = 1024U;
@@ -30,16 +33,28 @@ static const unsigned TAILLE_MAX_MSG = 1024U;
 static const int LARGEUR_FENETRE = 320 ;
 static const int HAUTEUR_FENETRE = 200 ;
 
-/* identifiant du "timer" de MAJ de la fenÃªtre de l'horloge */
+/* identifiant du "timer" de déplacement de la souris */
 static const UINT_PTR ID_EVNT_TIMER_SOURIS = 0x53554F4D ;   /* chaîne 'MOUS' en hexa */
 /* délai entre deux mouvements de souris (en millisecondes) */
 static const UINT DELAI_MVT_SOURIS = 1000U ;
 
-/* amplitude maximale d'un mouvement de souris, en pixels */
-static const LONG AMPLITUDE_MVT = 10L;
+/* amplitude d'un mouvement de souris, en pixels */
+#define AMPLITUDE_MVT  4L
+
+/* liste cyclique des mouvement de souris (tracer un "cercle" miniature) */
+static const POINT MVTS[] = {
+		{  AMPLITUDE_MVT,              0 },
+		{  AMPLITUDE_MVT,  AMPLITUDE_MVT },
+		{              0,  AMPLITUDE_MVT },
+		{ -AMPLITUDE_MVT,  AMPLITUDE_MVT },
+		{ -AMPLITUDE_MVT,              0 },
+		{ -AMPLITUDE_MVT, -AMPLITUDE_MVT },
+		{              0, -AMPLITUDE_MVT },
+		{  AMPLITUDE_MVT, -AMPLITUDE_MVT },
+};
 
 /* nombre maximal de mouvements hors fenêtre active avant recentrage */
-static const unsigned MAX_MVMTS_DEHORS = 10U ;
+static const unsigned int MAX_MVMTS_DEHORS = 10U ;
 
 /* == Messages affichés == */
 
@@ -50,17 +65,17 @@ static const WCHAR* FMT_MSG_A_PROPOS =
 
 
 /*========================================================================*/
-/*                          DEFINITIONS DE TYPES                          */
-/*========================================================================*/
-
-
-
-/*========================================================================*/
 /*                           VARIABLES GLOBALES                           */
 /*========================================================================*/
 
 /* nombre de mouvements hors de la fenêtre active */
 static unsigned int mvmts_dehors = 0 ;
+
+/* "handle" de la fenêtre principale de ce programme */
+static HWND main_window = NULL ;
+
+/* numéro d'index du mouvement courant */
+static size_t idx_mvt = 0 ;
 
 
 /*========================================================================*/
@@ -73,19 +88,6 @@ static unsigned int mvmts_dehors = 0 ;
 
 
 /* === FONCTIONS UTILITAIRES "PRIVEES" === */
-
-/* génère des nombres pseudo-aléatoires plus ou moins uniformes */
-static int
-randint(int n)
-{
-	assert (n <= RAND_MAX) ;
-	int end = RAND_MAX / n ;
-	assert (end > 0) ;
-	end *= n ;
-	int r ;
-	while ((r = rand ()) >= end) ;
-	return r % n ;
-}
 
 static DWORD
 MsgErreurSys (const WCHAR* fmtMsg)
@@ -110,7 +112,10 @@ MsgErreurSys (const WCHAR* fmtMsg)
 		         TAILLE_MAX_MSG - wcslen(msgErr)) ;
 		LocalFree (ptrMsgSys) ;
 	}
-	MessageBoxW (NULL, msgErr, TITRE_PRG, MB_ICONERROR) ;
+	MessageBoxW (main_window,
+	             msgErr,
+	             TITRE_PRG,
+	             MB_ICONERROR | MB_SETFOREGROUND) ;
 	/* renvoie le code d'erreur système utilisé */
 	return codeErr ;
 }
@@ -195,11 +200,14 @@ MouseTimerProc (HWND hwnd,
 	/* s'assure qu'on ne change pas de fenêtre */
 	GarderDansFenetreCourante () ;
 
-	/* détermine l'amplitude du mouvement de la souris à générer */
+	/* préparation de l'entrée pour le système */
 	inpMsgs[0].type = INPUT_MOUSE ;
 	inpMsgs[0].mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_MOVE_NOCOALESCE ;
-	inpMsgs[0].mi.dx = randint(AMPLITUDE_MVT) - (AMPLITUDE_MVT / 2);
-	inpMsgs[0].mi.dy = randint(AMPLITUDE_MVT) - (AMPLITUDE_MVT / 2);
+	inpMsgs[0].mi.dx = MVTS[idx_mvt].x ;
+	inpMsgs[0].mi.dy = MVTS[idx_mvt].y ;
+
+	/* détermine le prochain mouvement de la souris à générer */
+	idx_mvt = (idx_mvt + 1) % (sizeof(MVTS) / sizeof(POINT)) ;
 
 	/* génère un mouvement de souris */
 	UINT inpSent = SendInput (1U, inpMsgs, sizeof(INPUT)) ;
@@ -239,7 +247,6 @@ MainWndProc (HWND hwnd,
 		GetClientRect (hwnd, &clientRect) ;
 
 		swprintf (txt, MAX_PATH, FMT_MSG_A_PROPOS, VERSION_PRG) ;
-
 		DrawTextW (hDC,
 		           txt,
 		           -1,
@@ -295,36 +302,33 @@ WinMain (HINSTANCE hInstance,
 	}
 
 	/* créé la fenêtre principale (et unique) de notre application */
-	HWND mainWnd = CreateWindowExW (WS_EX_APPWINDOW,
-	                                CLASSE_FENETRE,
-	                                TITRE_PRG,
-	                                WS_OVERLAPPEDWINDOW,
-	                                CW_USEDEFAULT,
-	                                CW_USEDEFAULT,
-	                                LARGEUR_FENETRE,
-	                                HAUTEUR_FENETRE,
-	                                NULL,
-	                                NULL,
-	                                hInstance,
-	                                NULL) ;
-	if (mainWnd == NULL) {
+	main_window = CreateWindowExW (WS_EX_APPWINDOW,
+	                               CLASSE_FENETRE,
+	                               TITRE_PRG,
+	                               WS_OVERLAPPEDWINDOW,
+	                               CW_USEDEFAULT,
+	                               CW_USEDEFAULT,
+	                               LARGEUR_FENETRE,
+	                               HAUTEUR_FENETRE,
+	                               NULL,
+	                               NULL,
+	                               hInstance,
+	                               NULL) ;
+	if (main_window == NULL) {
 		MsgErreurSys (L"Echec de CreateWindow() !") ;
 		return -1 ;
 	}
 
 	/* affiche la fenêtre nouvellement créée */
-	ShowWindow (mainWnd, nShowCmd) ;
-	BOOL ok = UpdateWindow (mainWnd) ;
+	ShowWindow (main_window, nShowCmd) ;
+	BOOL ok = UpdateWindow (main_window) ;
 	if (!ok) {
 		MsgErreurSys (L"Echec de UpdateWindow() !") ;
 		return -1 ;
 	}
 
-	/* initialisation du générateur de nombres pseudo-aléatoires */
-	srand((unsigned)rand());
-
 	/* création du "timer" générant les évènements de mouvement de souris */
-	UINT_PTR idTmr = SetTimer (mainWnd,
+	UINT_PTR idTmr = SetTimer (main_window,
 	                           ID_EVNT_TIMER_SOURIS,
 	                           DELAI_MVT_SOURIS,
 	                           MouseTimerProc) ;
@@ -346,7 +350,7 @@ WinMain (HINSTANCE hInstance,
 	}
 
 	/* arrête et supprime le "timer" créé */
-	KillTimer (mainWnd, ID_EVNT_TIMER_SOURIS) ;
+	KillTimer (main_window, ID_EVNT_TIMER_SOURIS) ;
 
 	/* teste si une erreur est survenue */
 	if (res == -1) {
