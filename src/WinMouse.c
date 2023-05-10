@@ -24,7 +24,7 @@
  *
  * Version courante du programme WinMouse.
  */
-#define VERSION_PRG  L"0.7.0 du 25/04/2023"
+#define VERSION_PRG  L"0.7.7 du 10/05/2023"
 
 /* taille maximale d'un message affiché par ce programme */
 static const unsigned TAILLE_MAX_MSG = 1024U;
@@ -77,6 +77,9 @@ static HWND main_window = NULL ;
 /* numéro d'index du mouvement courant */
 static size_t idx_mvt = 0 ;
 
+/* "flag" de traitement d'erreur en cours */
+static volatile BOOL in_error = FALSE;
+
 
 /*========================================================================*/
 /*                               FONCTIONS                                */
@@ -112,10 +115,15 @@ MsgErreurSys (const WCHAR* fmtMsg)
 		         TAILLE_MAX_MSG - wcslen(msgErr)) ;
 		LocalFree (ptrMsgSys) ;
 	}
-	MessageBoxW (main_window,
-	             msgErr,
-	             TITRE_PRG,
-	             MB_ICONERROR | MB_SETFOREGROUND) ;
+	/* ne pas multiplier les boîtes de message d'erreurs */
+	if (!in_error) {
+		in_error = TRUE ;
+		MessageBoxW (main_window,
+		             msgErr,
+		             TITRE_PRG,
+		             MB_ICONERROR | MB_SETFOREGROUND) ;
+		in_error = FALSE ;
+	}
 	/* renvoie le code d'erreur système utilisé */
 	return codeErr ;
 }
@@ -188,11 +196,12 @@ MouseTimerProc (HWND hwnd,
                 UINT_PTR idEvent,
                 DWORD dwTime)
 {
-	INPUT inpMsgs[1];
-	ZeroMemory(inpMsgs, sizeof(inpMsgs));
-
 	/* paramètres inutilisés */
 	(void)hwnd; (void)uMsg; (void)dwTime;
+
+	/* entrées utilisateur à générer */
+	INPUT inpMsgs[1];
+	ZeroMemory (inpMsgs, sizeof(inpMsgs)) ;
 
 	/* vérifie que l'on est bien le destinataire du message */
 	if (idEvent != ID_EVNT_TIMER_SOURIS) return ;
