@@ -10,20 +10,20 @@ ID_ICONE_WIN_MOUSE      ICON    DISCARDABLE     "WinMouse.ico"
 // Version information
 
 VS_VERSION_INFO VERSIONINFO
-	FILEVERSION    0,5,0,0
-	PRODUCTVERSION 0,5,0,0
+	FILEVERSION    0,7,7,0
+	PRODUCTVERSION 0,7,7,0
 {
 	BLOCK "StringFileInfo"
 	{
 		BLOCK "040C04E4"
 		{
-			VALUE "CompanyName",        "—\0"
+			VALUE "CompanyName",        "\0"
 			VALUE "FileDescription",    "Mouvements souris Windows NT\0"
-			VALUE "FileVersion",        "0.5.0.0\0"
+			VALUE "FileVersion",        "0.7.7.0\0"
 			VALUE "LegalCopyright",     "(c) 2023 KR\0"
 			VALUE "OriginalFilename",   "WinMouse.exe\0"
 			VALUE "ProductName",        "Mouvements souris Windows NT\0"
-			VALUE "ProductVersion",     "0.5.0.0\0"
+			VALUE "ProductVersion",     "0.7.7.0\0"
 		}
 	}
 	BLOCK "VarFileInfo"
