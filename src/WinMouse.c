@@ -24,7 +24,7 @@
  *
  * Version courante du programme WinMouse.
  */
-#define VERSION_PRG  L"0.7.7 du 10/05/2023"
+#define VERSION_PRG  L"0.7.7 du 15/05/2023"
 
 /* taille maximale d'un message affiché par ce programme */
 static const unsigned TAILLE_MAX_MSG = 1024U;
@@ -152,7 +152,7 @@ GarderDansFenetreCourante (void)
 	}
 	/* si le pointeur est dans la fenêtre, rien à faire... */
 	if (PtInRect (&currWinRect, cursPos)) {
-		mvmts_dehors = 0;
+		mvmts_dehors = 0 ;
 		return ;
 	}
 	/* ... sinon, incrémente le compteur de mouvements hors de la fenêtre... */
@@ -184,6 +184,7 @@ GarderDansFenetreCourante (void)
 		MsgErreurSys (L"Echec de SetCursorPos() !") ;
 		return ;
 	}
+	mvmts_dehors = 0 ;
 }
 
 
