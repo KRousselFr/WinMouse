@@ -24,7 +24,7 @@
  *
  * Version courante du programme WinMouse.
  */
-#define VERSION_PRG  L"0.7.7 du 15/05/2023"
+#define VERSION_PRG  L"0.7.7 du 20/06/2024"
 
 /* taille maximale d'un message affiché par ce programme */
 static const unsigned TAILLE_MAX_MSG = 1024U;
@@ -96,6 +96,7 @@ static DWORD
 MsgErreurSys (const WCHAR* fmtMsg)
 {
 	DWORD codeErr = GetLastError () ;
+	if (codeErr == 0) return 0 ;
 	WCHAR msgErr[TAILLE_MAX_MSG] ;
 	swprintf (msgErr, TAILLE_MAX_MSG, fmtMsg, codeErr) ;
 	/* essaie d'obtenir une description de l'erreur en question */
@@ -287,7 +288,7 @@ WinMain (HINSTANCE hInstance,
          int nShowCmd)
 {
 	/* paramètres inutiles */
-	(void)hPrevInstance ;
+	(void)hPrevInstance ;   (void) lpCmdLine;
 
 	/* définition de la classe de notre fenêtre */
 	WNDCLASSEXW wndClass ;
